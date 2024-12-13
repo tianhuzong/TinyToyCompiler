@@ -14,7 +14,7 @@ using namespace std;
 class CodeGenContext ;
 class NBlock{
     public:
-        vector<shared_ptr<Node>>
+        vector<shared_ptr<Node>> stmts;
 };
 class Node {
 public:
@@ -74,4 +74,29 @@ class WhileStmtAst : public StmtAst {
         WhileStmtAst(shared_ptr<ExprAst> condition, shared_ptr<NBlock> body) : condition(condition), body(body) {};
         virtual llvm::Value* codeGen(CodeGenContext& context);
 }
+
+class VarStmtAst : public StmtAst {
+    public:
+        int type;
+        shared_ptr<NameAst> name;
+        shared_ptr<ExprAst> init;
+        VarStmtAst(int type, shared_ptr<NameAst> name, shared_ptr<ExprAst> init) : type(type), name(name), init(init) {};
+        virtual llvm::Value* codeGen(CodeGenContext& context);
+}
+
+class CallStmtAst : public StmtAst {
+    public:
+        shared_ptr<NameAst> function;
+        vector<shared_ptr<ExprAst>> args;
+        CallStmtAst(shared_ptr<NameAst> name, vector<shared_ptr<ExprAst>> args) : name(name), args(args) {};
+        virtual llvm::Value* codeGen(CodeGenContext& context);
+}
+
+class ReturnStmtAst : public StmtAst {
+    public:
+        shared_ptr<ExprAst> expr;
+        ReturnStmtAst(shared_ptr<ExprAst> expr) : expr(expr) {};
+        virtual llvm::Value* codeGen(CodeGenContext& context);
+}   
+
 #endif
