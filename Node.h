@@ -16,112 +16,114 @@ typedef std::vector<shared_ptr<ExprAst>> ExprList;
 typedef std::vector<shared_ptr<VarStmtAst>> VarList;
 
 class CodeGenContext ;
-class NBlock{
-    public:
-        vector<shared_ptr<Node>> stmts;
-};
+class CodeGenBlock;
 class Node {
 public:
     //Node() = default;
 	virtual ~Node() = default;
 	virtual llvm::Value* codeGen(CodeGenContext& context) { return nullptr; }
 };
-class ExprAst : public Node ;
-class StmtAst : public Node ;
-class ConstantAst : public Node;
+class ExprAst : public Node{} ;
+class StmtAst : public Node{} ;
+class ConstantAst : public Node{};
+
+class NBlock : public Node {
+public:
+    vector<shared_ptr<Node>> stmts;
+    NBlock() {};
+    virtual llvm::Value* codeGen(CodeGenContext& context) override; 
+};
 
 class ExprStmtAst : public StmtAst {
-    /*表达式语句 例如某些函数的call*/
-    public:
-        shared_ptr<ExprAst> expr;
-        ExprStmtAst(shared_ptr<ExprAst> expr) : expr(expr) {};
-        virtual llvm::Value* codeGen(CodeGenContext& context);
-}
+public:
+    shared_ptr<ExprAst> expr;
+    ExprStmtAst(shared_ptr<ExprAst> expr) : expr(expr) {};
+    virtual llvm::Value* codeGen(CodeGenContext& context) override; 
+};
 
 class NumAst : public ConstantAst {
-    public:
-        int value;
-        NumAst(int value) : value(value) {};
-        virtual llvm::Value* codeGen(CodeGenContext& context);
-}
+public:
+    int value;
+    NumAst(int value) : value(value) {};
+    virtual llvm::Value* codeGen(CodeGenContext& context) override; 
+};
 
 class BinopAst : public ExprAst {
-    public:
-        int op; //0 = +, 1 = -, 2 = *, 3 = /
-        shared_ptr<ExprAst> lhs;
-        shared_ptr<ExprAst> rhs;
-        BinopAst(char op, shared_ptr<ExprAst> lhs, shared_ptr<ExprAst> rhs) : op(op), lhs(lhs), rhs(rhs) {};
-        virtual llvm::Value* codeGen(CodeGenContext& context);
-}
+public:
+    int op; 
+    shared_ptr<ExprAst> lhs;
+    shared_ptr<ExprAst> rhs;
+    BinopAst(char op, shared_ptr<ExprAst> lhs, shared_ptr<ExprAst> rhs) : op(op), lhs(lhs), rhs(rhs) {};
+    virtual llvm::Value* codeGen(CodeGenContext& context) override; 
+};
 
 class NameAst : public ExprAst {
-    public:
-        string name;
-        NameAst(string name) : name(name) {};
-}
+public:
+    string name;
+    NameAst(string name) : name(name) {};
+    virtual llvm::Value* codeGen(CodeGenContext& context) override;
+};
 
 class IfStmtAst : public StmtAst {
-    public:
-        shared_ptr<ExprAst> condition;
-        shared_ptr<NBlock> thenStmt;
-        shared_ptr<NBlock> elseStmt;
-        IfStmtAst(shared_ptr<ExprAst> condition, shared_ptr<NBlock> thenStmt, shared_ptr<NBlock> elseStmt = nullptr) : condition(condition), thenStmt(thenStmt), elseStmt(elseStmt) {};
-        virtual llvm::Value* codeGen(CodeGenContext& context);
-}
+public:
+    shared_ptr<ExprAst> condition;
+    shared_ptr<NBlock> thenStmt;
+    shared_ptr<NBlock> elseStmt;
+    IfStmtAst(shared_ptr<ExprAst> condition, shared_ptr<NBlock> thenStmt, shared_ptr<NBlock> elseStmt = nullptr) : condition(condition), thenStmt(thenStmt), elseStmt(elseStmt) {};
+    virtual llvm::Value* codeGen(CodeGenContext& context) override; 
+};
 
 class ForStmtAst : public StmtAst {
-    public:
-        shared_ptr<StmtAst> init;
-        shared_ptr<ExprAst> condition;
-        shared_ptr<ExprAst> increment;
-        shared_ptr<NBlock> body;
-        ForStmtAst(shared_ptr<StmtAst> init, shared_ptr<ExprAst> condition, shared_ptr<ExprAst> increment, shared_ptr<NBlock> body) : init(init), condition(condition), increment(increment), body(body) {};
-        virtual llvm::Value* codeGen(CodeGenContext& context);
-}
+public:
+    shared_ptr<StmtAst> init;
+    shared_ptr<ExprAst> condition;
+    shared_ptr<ExprAst> increment;
+    shared_ptr<NBlock> body;
+    ForStmtAst(shared_ptr<StmtAst> init, shared_ptr<ExprAst> condition, shared_ptr<ExprAst> increment, shared_ptr<NBlock> body) : init(init), condition(condition), increment(increment), body(body) {};
+    virtual llvm::Value* codeGen(CodeGenContext& context) override; 
+};
 
 class WhileStmtAst : public StmtAst {
-    public:
-        shared_ptr<ExprAst> condition;
-        shared_ptr<NBlock> body;
-        WhileStmtAst(shared_ptr<ExprAst> condition, shared_ptr<NBlock> body) : condition(condition), body(body) {};
-        virtual llvm::Value* codeGen(CodeGenContext& context);
-}
+public:
+    shared_ptr<ExprAst> condition;
+    shared_ptr<NBlock> body;
+    WhileStmtAst(shared_ptr<ExprAst> condition, shared_ptr<NBlock> body) : condition(condition), body(body) {};
+    virtual llvm::Value* codeGen(CodeGenContext& context) override; 
+};
 
 class VarStmtAst : public StmtAst {
-    public:
-        int type;
-        shared_ptr<NameAst> name;
-        shared_ptr<ExprAst> init;
-        VarStmtAst(int type, shared_ptr<NameAst> name, shared_ptr<ExprAst> init=nullptr) : type(type), name(name), init(init) {};
-        virtual llvm::Value* codeGen(CodeGenContext& context);
-}
+public:
+    int type;
+    shared_ptr<NameAst> name;
+    shared_ptr<ExprAst> init;
+    VarStmtAst(int type, shared_ptr<NameAst> name, shared_ptr<ExprAst> init = nullptr) : type(type), name(name), init(init) {};
+    virtual llvm::Value* codeGen(CodeGenContext& context) override; 
+};
 
 class CallStmtAst : public StmtAst {
-    public:
-        shared_ptr<NameAst> function;
-        vector<shared_ptr<ExprAst>> args;
-        CallStmtAst(shared_ptr<NameAst> name, vector<shared_ptr<ExprAst>> args) : name(name), args(args) {};
-        virtual llvm::Value* codeGen(CodeGenContext& context);
-}
+public:
+    shared_ptr<NameAst> function;
+    vector<shared_ptr<ExprAst>> args;
+    CallStmtAst(shared_ptr<NameAst> name, vector<shared_ptr<ExprAst>> args) : name(name), args(args) {};
+    virtual llvm::Value* codeGen(CodeGenContext& context) override; 
+};
 
 class ReturnStmtAst : public StmtAst {
-    public:
-        shared_ptr<ExprAst> expr;
-        ReturnStmtAst(shared_ptr<ExprAst> expr) : expr(expr) {};
-        virtual llvm::Value* codeGen(CodeGenContext& context);
-}   
+public:
+    shared_ptr<ExprAst> expr;
+    ReturnStmtAst(shared_ptr<ExprAst> expr) : expr(expr) {};
+    virtual llvm::Value* codeGen(CodeGenContext& context) override; 
+};   
 
 class FunctionStmtAst : public StmtAst {
-    //函数定义
-    public:
-        int type; //没卵用在这个语言
-        shared_ptr<NameAst> name;
-        shared_ptr<VarList> args = make_shared<VarList>();
-        shared_ptr<NBlock> block;
-        is_extern = false;
-        FunctionStmtAst(int type, shared_ptr<NameAst> name, shared_ptr<VarList> args, shared_ptr<NBlock> block, bool is_extern = false) : type(type), name(name), args(args), block(block), is_extern(is_extern) {};
-        virtual llvm::Value* codeGen(CodeGenContext& context);
-}
-
+public:
+    int type; // 在这个语言没卵用
+    shared_ptr<NameAst> name;
+    shared_ptr<VarList> args = make_shared<VarList>();
+    shared_ptr<NBlock> block;
+    bool is_extern;
+    FunctionStmtAst(int type, shared_ptr<NameAst> name, shared_ptr<VarList> args, shared_ptr<NBlock> block, bool is_extern = false) : type(type), name(name), args(args), block(block), is_extern(is_extern) {};
+    virtual llvm::Value* codeGen(CodeGenContext& context) override; 
+};
 
 #endif

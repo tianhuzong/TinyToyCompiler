@@ -1,25 +1,28 @@
 %{
-    #include "parser.hpp"
     #include <iostream>
+    #include <string>
+    #include "Node.h"
+    #include "parser.hpp"
+
+
+    
     using namespace std;
-    #define TOKEN(t) yyval.token = t
-    #define SAVE_TOKEN yyval.name = new string(yytext)
+    #define TOKEN(t) yylval.token = t
+    #define SAVE_TOKEN yylval.name = new string(yytext)
 %}
 
 %option noyywrap
 %option yylineno
 
 %%
-"#".*                   ;
-[ \t\r\n]				;
-[a-zA-Z_][a-zA-Z0-9_]*	{ SAVE_TOKEN; return TOKEN_ID; }
-(([-+]?\d+\.\d{0,})|(\d+\.?\d{0,}[eE][+-]?\d+)) { SAVE_TOKEN; return NUM;}
-"int"    { TOKEN(TOKEN_INT); }
+
+"int"       { TOKEN(TOKEN_INT); }
 "return"    { TOKEN(TOKEN_RETURN); }
 "if"        { TOKEN(TOKEN_IF); }
 "else"      { TOKEN(TOKEN_ELSE); }
 "for"       { TOKEN(TOKEN_FOR); }
 "while"     { TOKEN(TOKEN_WHILE); }
+"extern"    { TOKEN(TOKEN_EXTERN); }
 "+"         { TOKEN(TOKEN_PLUS); }
 "-"         { TOKEN(TOKEN_MINUS); }
 "*"         { TOKEN(TOKEN_MUL); }
@@ -47,6 +50,9 @@
 "]"         { TOKEN(RBRACKET); }
 "{"         { TOKEN(LBRACE); }
 "}"         { TOKEN(RBRACE); }
-
+"#".*                   ;
+[ \t\r\n]				;
+[a-zA-Z_][a-zA-Z0-9_]*	{ SAVE_TOKEN; return TOKEN_ID; }
+(([-+]?\d+\.\d*)|(\d+\.?\d*[eE][+-]?\d+)) { SAVE_TOKEN; return NUM;}
 
 %%

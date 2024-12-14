@@ -1,5 +1,6 @@
 %{
     #include <iostream>
+    #include <string>
     #include "Node.h"
     NBlock* root_program;
     extern int yylex();
@@ -9,16 +10,16 @@
 %}
 
 %union{
-    Nblock* block;
+    NBlock* block;
     int token;
     Node* node;
-    string* name;
+    std::string* name;
 }
 
 %token <token> TOKEN_INT
 %token <token> TOKEN_PLUS TOKEN_MINUS TOKEN_MUL TOKEN_DIV /*+ - * / */
 %token <token> LPAREN RPAREN /*( ) */ LBRACKET RBRACKET /*[ ] */ LBRACE RBRACE /*{ } */
-%token <token> TOKEN_RETURN /*return*/ TOKEN_IF /*if*/ TOKEN_ELSE /*else*/ TOKEN_WHILE /*while*/ TOKEN_FOR /*for*/
+%token <token> TOKEN_RETURN /*return*/ TOKEN_IF /*if*/ TOKEN_ELSE /*else*/ TOKEN_WHILE /*while*/ TOKEN_FOR /*for*/ TOKEN_EXTERN
 %token <token> TOKEN_EQUAL TOKEN_CEQ TOKEN_NEL TOKEN_NLT TOKEN_NLE TOKEN_NGT TOKEN_NGE /*= ==!= < <= > >= */
 %token <token> TOKEN_XOR TOKEN_MOD TOKEN_SHL TOKEN_SHR /*^ % << >> */
 %token <token> TOKEN_AND TOKEN_OR TOKEN_NOT /*&& ||! */
@@ -27,7 +28,7 @@
 
 
 %type <block> program block stmts
-%type <node>  stmt expr call_args
+%type <node>  stmt expr call_args func_decl_args
 %type <node> var_decl func_decl 
 %type <node> if_stmt while_stmt for_stmt
 
@@ -55,10 +56,18 @@ func_decl : TOKEN_INT TOKEN_ID LPAREN func_decl_args RPAREN block { $$ = new sha
 
 func_decl_args : /* blank */ { $$ = new VariableList(); }
 	| var_decl { $$ = new VariableList(); $$->push_back(shared_ptr<VarStmtAst>($<var_decl>1)); }
-	| func_decl_args TCOMMA var_decl { $1->push_back(shared_ptr<VarStmtAst>($<var_decl>3)); }
+	| func_decl_args TOKEN_COMMA var_decl { $1->push_back(shared_ptr<VarStmtAst>($<var_decl>3)); }
 
 call_args : /* blank */ { $$ = new ExprList(); }
 	| expr { $$ = new ExprList(); $$->push_back(shared_ptr<ExprAst>($1)); }
 	| call_args TOKEN_COMMA expr { $1->push_back(shared_ptr<ExprAst>($3)); }
+
+expr : NUM {}
+
+for_stmt : {}
+
+while_stmt : {}
+
+if_stmt : {}
 
 %%
