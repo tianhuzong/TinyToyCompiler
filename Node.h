@@ -11,6 +11,10 @@
 
 using namespace std;
 
+typedef std::vector<shared_ptr<StmtAst>> StmtList;
+typedef std::vector<shared_ptr<ExprAst>> ExprList;
+typedef std::vector<shared_ptr<VarStmtAst>> VarList;
+
 class CodeGenContext ;
 class NBlock{
     public:
@@ -26,10 +30,18 @@ class ExprAst : public Node ;
 class StmtAst : public Node ;
 class ConstantAst : public Node;
 
+class ExprStmtAst : public StmtAst {
+    /*表达式语句 例如某些函数的call*/
+    public:
+        shared_ptr<ExprAst> expr;
+        ExprStmtAst(shared_ptr<ExprAst> expr) : expr(expr) {};
+        virtual llvm::Value* codeGen(CodeGenContext& context);
+}
+
 class NumAst : public ConstantAst {
     public:
-        double value;
-        NumAst(double value) : value(value) {};
+        int value;
+        NumAst(int value) : value(value) {};
         virtual llvm::Value* codeGen(CodeGenContext& context);
 }
 
@@ -80,7 +92,7 @@ class VarStmtAst : public StmtAst {
         int type;
         shared_ptr<NameAst> name;
         shared_ptr<ExprAst> init;
-        VarStmtAst(int type, shared_ptr<NameAst> name, shared_ptr<ExprAst> init) : type(type), name(name), init(init) {};
+        VarStmtAst(int type, shared_ptr<NameAst> name, shared_ptr<ExprAst> init=nullptr) : type(type), name(name), init(init) {};
         virtual llvm::Value* codeGen(CodeGenContext& context);
 }
 
@@ -98,5 +110,18 @@ class ReturnStmtAst : public StmtAst {
         ReturnStmtAst(shared_ptr<ExprAst> expr) : expr(expr) {};
         virtual llvm::Value* codeGen(CodeGenContext& context);
 }   
+
+class FunctionStmtAst : public StmtAst {
+    //函数定义
+    public:
+        int type; //没卵用在这个语言
+        shared_ptr<NameAst> name;
+        shared_ptr<VarList> args = make_shared<VarList>();
+        shared_ptr<NBlock> block;
+        is_extern = false;
+        FunctionStmtAst(int type, shared_ptr<NameAst> name, shared_ptr<VarList> args, shared_ptr<NBlock> block, bool is_extern = false) : type(type), name(name), args(args), block(block), is_extern(is_extern) {};
+        virtual llvm::Value* codeGen(CodeGenContext& context);
+}
+
 
 #endif
