@@ -1,13 +1,14 @@
 %{
     #include <iostream>
     #include <string>
+    #include <stdio.h>
     #include "Node.h"
     #include "parser.hpp"
 
 
     
     using namespace std;
-    #define TOKEN(t) yylval.token = t
+    #define TOKEN(t) return yylval.token = t
     #define SAVE_TOKEN yylval.name = new string(yytext)
 %}
 
@@ -16,7 +17,7 @@
 
 %%
 
-"int"       { TOKEN(TOKEN_INT); }
+"int"       { printf("int\n"); TOKEN(TOKEN_INT); }
 "return"    { TOKEN(TOKEN_RETURN); }
 "if"        { TOKEN(TOKEN_IF); }
 "else"      { TOKEN(TOKEN_ELSE); }
@@ -52,7 +53,7 @@
 "}"         { TOKEN(RBRACE); }
 "#".*                   ;
 [ \t\r\n]				;
-[a-zA-Z_][a-zA-Z0-9_]*	{ SAVE_TOKEN; return TOKEN_ID; }
-(([-+]?\d+\.\d*)|(\d+\.?\d*[eE][+-]?\d+)) { SAVE_TOKEN; return NUM;}
+[a-zA-Z_][a-zA-Z0-9_]*	{ printf("id: %s\n", yytext); SAVE_TOKEN; return TOKEN_ID; }
+[0-9]+ {printf("num: %s\n", yytext); SAVE_TOKEN; return NUM;}
 
 %%

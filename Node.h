@@ -11,12 +11,17 @@
 
 using namespace std;
 
+class CodeGenContext ;
+class CodeGenBlock;
+class StmtAst;
+class ExprAst;
+class VarStmtAst;
+
 typedef std::vector<shared_ptr<StmtAst>> StmtList;
 typedef std::vector<shared_ptr<ExprAst>> ExprList;
 typedef std::vector<shared_ptr<VarStmtAst>> VarList;
 
-class CodeGenContext ;
-class CodeGenBlock;
+
 class Node {
 public:
     //Node() = default;
@@ -25,23 +30,24 @@ public:
 };
 class ExprAst : public Node{} ;
 class StmtAst : public Node{} ;
-class ConstantAst : public Node{};
+
 
 class NBlock : public Node {
 public:
-    vector<shared_ptr<Node>> stmts;
-    NBlock() {};
+    std::shared_ptr<StmtList> stmts = make_shared<StmtList>();
+    NBlock(){};
+
     virtual llvm::Value* codeGen(CodeGenContext& context) override; 
 };
 
 class ExprStmtAst : public StmtAst {
 public:
-    shared_ptr<ExprAst> expr;
+    std::shared_ptr<ExprAst> expr;
     ExprStmtAst(shared_ptr<ExprAst> expr) : expr(expr) {};
     virtual llvm::Value* codeGen(CodeGenContext& context) override; 
 };
 
-class NumAst : public ConstantAst {
+class NumAst : public ExprAst {
 public:
     int value;
     NumAst(int value) : value(value) {};
@@ -75,11 +81,11 @@ public:
 
 class ForStmtAst : public StmtAst {
 public:
-    shared_ptr<StmtAst> init;
+    shared_ptr<ExprAst> init;
     shared_ptr<ExprAst> condition;
     shared_ptr<ExprAst> increment;
     shared_ptr<NBlock> body;
-    ForStmtAst(shared_ptr<StmtAst> init, shared_ptr<ExprAst> condition, shared_ptr<ExprAst> increment, shared_ptr<NBlock> body) : init(init), condition(condition), increment(increment), body(body) {};
+    ForStmtAst(shared_ptr<ExprAst> init, shared_ptr<ExprAst> condition, shared_ptr<ExprAst> increment, shared_ptr<NBlock> body) : init(init), condition(condition), increment(increment), body(body) {};
     virtual llvm::Value* codeGen(CodeGenContext& context) override; 
 };
 
@@ -100,11 +106,20 @@ public:
     virtual llvm::Value* codeGen(CodeGenContext& context) override; 
 };
 
+class AssignExprAst : public ExprAst {
+    /* 赋值表达式 */
+public:
+    shared_ptr<NameAst> name;
+    shared_ptr<ExprAst> value;
+    AssignExprAst(shared_ptr<NameAst> name, shared_ptr<ExprAst> value) : name(name), value(value) {};
+    virtual llvm::Value* codeGen(CodeGenContext& context) override; 
+};
+
 class CallStmtAst : public StmtAst {
 public:
     shared_ptr<NameAst> function;
     vector<shared_ptr<ExprAst>> args;
-    CallStmtAst(shared_ptr<NameAst> name, vector<shared_ptr<ExprAst>> args) : name(name), args(args) {};
+    CallStmtAst(shared_ptr<NameAst> function, vector<shared_ptr<ExprAst>> args) : function(function), args(args) {};
     virtual llvm::Value* codeGen(CodeGenContext& context) override; 
 };
 

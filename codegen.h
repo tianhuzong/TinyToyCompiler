@@ -5,13 +5,15 @@
 #include "llvm/IR/Value.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
+#include "llvm/IR/IRBuilder.h"
+#include "Node.h"
 
 class CodeGenBlock{
 public:
     llvm::BasicBlock * block;
     llvm::Value * returnValue;
-    std::map<string, Value*> locals;
-    std::map<string, bool> isFuncArg;
+    std::map<std::string, llvm::Value*> locals;
+    std::map<std::string, bool> isFuncArg;
 };
 
 class CodeGenContext{
@@ -23,16 +25,16 @@ public:
     std::unique_ptr<llvm::Module> theModule;
     std::map<string, llvm::Value*> locals;
 
-    CodeGenContext(): builder(llvmContext), typeSystem(llvmContext){
+    CodeGenContext(): builder(llvmContext) {
         theModule = std::unique_ptr<llvm::Module>(new llvm::Module("main", this->llvmContext));
     }
     void generateCode(NBlock& root);
-    std::map<std::string, Value*>& locals() { return blocks.top()->locals; }
-    BasicBlock *currentBlock() { return blocks.top()->block; }
-    void pushBlock(BasicBlock *block) { blocks.push(new CodeGenBlock()); blocks.top()->returnValue = nullptr; blocks.top()->block = block; }
+    std::map<std::string, llvm::Value*>& getlocals() { return blocks.top()->locals; }
+    llvm::BasicBlock *currentBlock() { return blocks.top()->block; }
+    void pushBlock(llvm::BasicBlock *block) { blocks.push(new CodeGenBlock()); blocks.top()->returnValue = nullptr; blocks.top()->block = block; }
     void popBlock() { CodeGenBlock *top = blocks.top(); blocks.pop(); delete top; }
-    void setCurrentReturnValue(Value *value) { blocks.top()->returnValue = value; }
-    Value* getCurrentReturnValue() { return blocks.top()->returnValue; }
-}
+    void setCurrentReturnValue(llvm::Value *value) { blocks.top()->returnValue = value; }
+    llvm::Value* getCurrentReturnValue() { return blocks.top()->returnValue; }
+};
 
 #endif 
