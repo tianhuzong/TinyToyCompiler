@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.5)
 project(TinyToyCompiler CXX)
-
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/bin")
 # 查找Flex和Bison
 find_package(FLEX REQUIRED)
 find_package(BISON REQUIRED)
