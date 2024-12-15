@@ -17,7 +17,7 @@
 
 %%
 
-"int"       { printf("int\n"); TOKEN(TOKEN_INT); }
+"int"       { TOKEN(TOKEN_INT); }
 "return"    { TOKEN(TOKEN_RETURN); }
 "if"        { TOKEN(TOKEN_IF); }
 "else"      { TOKEN(TOKEN_ELSE); }
@@ -53,7 +53,7 @@
 "}"         { TOKEN(RBRACE); }
 "#".*                   ;
 [ \t\r\n]				;
-[a-zA-Z_][a-zA-Z0-9_]*	{ printf("id: %s\n", yytext); SAVE_TOKEN; return TOKEN_ID; }
-[0-9]+ {printf("num: %s\n", yytext); SAVE_TOKEN; return NUM;}
+[a-zA-Z_][a-zA-Z0-9_]*	{ SAVE_TOKEN; return TOKEN_ID; }
+[0-9]+ { SAVE_TOKEN; return NUM;}
 
 %%

@@ -11,5 +11,8 @@ int main(int argc, char* argv[]){
     }
     yyparse();
     //std::cout<< root_program << "\n";
+    CodeGenContext context;
+    context.generateCode(*root_program);
+    context.theModule->print(llvm::outs(), nullptr);
     return 0;
 }

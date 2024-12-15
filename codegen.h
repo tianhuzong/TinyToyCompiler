@@ -30,11 +30,17 @@ public:
     }
     void generateCode(NBlock& root);
     std::map<std::string, llvm::Value*>& getlocals() { return blocks.top()->locals; }
+    llvm::Value* getvalue(std::string name) { return getlocals()[name]; }
+    void setvalue(std::string name, llvm::Value* value) { getlocals()[name] = value; }
     llvm::BasicBlock *currentBlock() { return blocks.top()->block; }
     void pushBlock(llvm::BasicBlock *block) { blocks.push(new CodeGenBlock()); blocks.top()->returnValue = nullptr; blocks.top()->block = block; }
     void popBlock() { CodeGenBlock *top = blocks.top(); blocks.pop(); delete top; }
     void setCurrentReturnValue(llvm::Value *value) { blocks.top()->returnValue = value; }
     llvm::Value* getCurrentReturnValue() { return blocks.top()->returnValue; }
+    llvm::LLVMContext& getContext() { return llvmContext; }
 };
+
+llvm::Value* LogError(const char* str);
+llvm::Value* LogError(string str);
 
 #endif 

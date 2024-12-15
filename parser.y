@@ -46,8 +46,8 @@
 
 %%
 program : stmts { root_program = $1; }
-stmts : stmt { $$ = new NBlock(); std::cout<< $$->stmts << "\n"; }
-    | stmts stmt { /*$1->stmts->push_back($2); $$ = $1; */}
+stmts : stmt { $$ = new NBlock();  $$->stmts->push_back(shared_ptr<StmtAst>($1));  }
+    | stmts stmt { $1->stmts->push_back(shared_ptr<StmtAst>($2)); $$ = $1; }
 stmt : var_decl { $$ = $1; }
     | func_decl { $$ = $1; }
     | expr {$$ = new ExprStmtAst(shared_ptr<ExprAst>($1));}
@@ -66,7 +66,7 @@ var_decl : TOKEN_INT tkid { $$ = new VarStmtAst(TOKEN_INT, shared_ptr<NameAst>($
 func_decl : TOKEN_INT tkid LPAREN func_decl_args RPAREN block { $$ = new FunctionStmtAst($1, shared_ptr<NameAst>($2), shared_ptr<VarList>($4), shared_ptr<NBlock>($6)); }
 
 func_decl_args : /* blank */ { $$ = new VarList(); }
-	| var_decl { $$ = new VarList(); $$->push_back(shared_ptr<VarStmtAst>($<var_decl>1));std::cout<< "\tfunc_decl_args: " << $<var_decl>1->name->name  << "\n"; }
+	| var_decl { $$ = new VarList(); $$->push_back(shared_ptr<VarStmtAst>($<var_decl>1)); }
 	| func_decl_args TOKEN_COMMA var_decl { $1->push_back(shared_ptr<VarStmtAst>($<var_decl>3)); }
 
 call_args : /* blank */ { $$ = new ExprList(); }

@@ -1,5 +1,6 @@
-int main(int argc, int argv, int argf){
-    int a = 0
-    a = 1
+int main(int argc){
+    if (1){
+        int a= 0
+    }
     return 0
 }
