@@ -41,6 +41,7 @@
 %type <expr>  expr assign
 %type <stmt>  stmt if_stmt while_stmt for_stmt var_decl func_decl 
 %type <tkid>  tkid
+%type <token> op
 
 %start program
 
@@ -64,6 +65,7 @@ var_decl : TOKEN_INT tkid { $$ = new VarStmtAst(TOKEN_INT, shared_ptr<NameAst>($
     | error { std::cout << "Error: Invalid variable declaration\n"; }
 
 func_decl : TOKEN_INT tkid LPAREN func_decl_args RPAREN block { $$ = new FunctionStmtAst($1, shared_ptr<NameAst>($2), shared_ptr<VarList>($4), shared_ptr<NBlock>($6)); }
+    | TOKEN_EXTERN TOKEN_INT tkid LPAREN func_decl_args RPAREN { $$ = new FunctionStmtAst($2, shared_ptr<NameAst>($3), shared_ptr<VarList>($5), nullptr, true); }
 
 func_decl_args : /* blank */ { $$ = new VarList(); }
 	| var_decl { $$ = new VarList(); $$->push_back(shared_ptr<VarStmtAst>($<var_decl>1)); }
@@ -75,6 +77,21 @@ call_args : /* blank */ { $$ = new ExprList(); }
 
 expr : NUM { $$ = new NumAst(std::atoi($1->c_str())); delete $1; }
     | assign { $$ = $1; }
+    | tkid {$<tkid>$ = $1; }
+    | LPAREN expr RPAREN {$$ = $2; }
+    | expr op expr { $$ = new BinopAst($2, shared_ptr<ExprAst>($1), shared_ptr<ExprAst>($3)); }
+    | expr TOKEN_MOD expr { $$ = new BinopAst($2, shared_ptr<ExprAst>($1), shared_ptr<ExprAst>($3)); }
+    | expr TOKEN_MUL expr { $$ = new BinopAst($2, shared_ptr<ExprAst>($1), shared_ptr<ExprAst>($3)); }
+    | expr TOKEN_DIV expr { $$ = new BinopAst($2, shared_ptr<ExprAst>($1), shared_ptr<ExprAst>($3)); }
+    | expr TOKEN_PLUS expr { $$ = new BinopAst($2, shared_ptr<ExprAst>($1), shared_ptr<ExprAst>($3)); }
+    | expr TOKEN_MINUS expr { $$ = new BinopAst($2, shared_ptr<ExprAst>($1), shared_ptr<ExprAst>($3)); }
+    | tkid LPAREN call_args RPAREN { $$ = new CallExprAst(shared_ptr<NameAst>($1), shared_ptr<ExprList>($3)); }
+    
+
+op :  TOKEN_EQUAL | TOKEN_CEQ | TOKEN_NEL | TOKEN_NLT | TOKEN_NLE | TOKEN_NGT | TOKEN_NGE
+    | TOKEN_XOR | TOKEN_SHL | TOKEN_SHR
+    | TOKEN_AND | TOKEN_OR | TOKEN_NOT
+
 
 
 assign : tkid TOKEN_EQUAL expr { $$ = new AssignExprAst(shared_ptr<NameAst>($1), shared_ptr<ExprAst>($3)); }

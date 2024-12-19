@@ -57,9 +57,9 @@ public:
 class BinopAst : public ExprAst {
 public:
     int op; 
-    shared_ptr<ExprAst> lhs;
-    shared_ptr<ExprAst> rhs;
-    BinopAst(char op, shared_ptr<ExprAst> lhs, shared_ptr<ExprAst> rhs) : op(op), lhs(lhs), rhs(rhs) {};
+    std::shared_ptr<ExprAst> lhs;
+    std::shared_ptr<ExprAst> rhs;
+    BinopAst(int op, shared_ptr<ExprAst> lhs, shared_ptr<ExprAst> rhs) : op(op), lhs(lhs), rhs(rhs) {};
     virtual llvm::Value* codeGen(CodeGenContext& context) override; 
 };
 
@@ -115,11 +115,11 @@ public:
     virtual llvm::Value* codeGen(CodeGenContext& context) override; 
 };
 
-class CallStmtAst : public StmtAst {
+class CallExprAst : public ExprAst {
 public:
     shared_ptr<NameAst> function;
-    vector<shared_ptr<ExprAst>> args;
-    CallStmtAst(shared_ptr<NameAst> function, vector<shared_ptr<ExprAst>> args) : function(function), args(args) {};
+    shared_ptr<ExprList> args;
+    CallExprAst(shared_ptr<NameAst> function, shared_ptr<ExprList> args) : function(function), args(args) {};
     virtual llvm::Value* codeGen(CodeGenContext& context) override; 
 };
 

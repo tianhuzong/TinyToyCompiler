@@ -1,12 +1,13 @@
 #ifndef CODEGEN_H
 #define CODEGEN_H
 
-#include <stack>
+#include <vector>
 #include "llvm/IR/Value.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/IRBuilder.h"
 #include "Node.h"
+#include "parser.hpp"
 
 class CodeGenBlock{
 public:
@@ -17,7 +18,7 @@ public:
 };
 
 class CodeGenContext{
-    std::stack<CodeGenBlock*> blocks;
+    std::vector<CodeGenBlock*> blocks;
 public:
     
     llvm::LLVMContext llvmContext;
@@ -29,14 +30,23 @@ public:
         theModule = std::unique_ptr<llvm::Module>(new llvm::Module("main", this->llvmContext));
     }
     void generateCode(NBlock& root);
-    std::map<std::string, llvm::Value*>& getlocals() { return blocks.top()->locals; }
-    llvm::Value* getvalue(std::string name) { return getlocals()[name]; }
-    void setvalue(std::string name, llvm::Value* value) { getlocals()[name] = value; }
-    llvm::BasicBlock *currentBlock() { return blocks.top()->block; }
-    void pushBlock(llvm::BasicBlock *block) { blocks.push(new CodeGenBlock()); blocks.top()->returnValue = nullptr; blocks.top()->block = block; }
-    void popBlock() { CodeGenBlock *top = blocks.top(); blocks.pop(); delete top; }
-    void setCurrentReturnValue(llvm::Value *value) { blocks.top()->returnValue = value; }
-    llvm::Value* getCurrentReturnValue() { return blocks.top()->returnValue; }
+    std::map<std::string, llvm::Value*>& getlocals() { return blocks.back()->locals; }
+    llvm::Value* getvalue(std::string name) { 
+        for(auto it : blocks){
+            if( it->locals.find(name) != it->locals.end() ){
+                return it->locals[name];
+            }
+        }
+        return nullptr;
+    }
+    void setvalue(std::string name, llvm::Value* value) {
+        blocks.back()->locals[name] = value;
+    }
+    llvm::BasicBlock *currentBlock() { return blocks.back()->block; }
+    void pushBlock(llvm::BasicBlock *block) { blocks.push_back(new CodeGenBlock()); blocks.back()->returnValue = nullptr; blocks.back()->block = block; }
+    void popBlock() { CodeGenBlock *top = blocks.back(); blocks.pop_back(); delete top; }
+    void setCurrentReturnValue(llvm::Value *value) { blocks.back()->returnValue = value; }
+    llvm::Value* getCurrentReturnValue() { return blocks.back()->returnValue; }
     llvm::LLVMContext& getContext() { return llvmContext; }
 };
 

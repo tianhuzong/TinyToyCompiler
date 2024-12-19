@@ -3,9 +3,11 @@
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/Module.h"
 #include <iostream>
+#include <cstdlib>
 #include "codegen.h"
 #include "Node.h"
 
+extern int yylineno;
 
 
 void CodeGenContext::generateCode(NBlock& root){
@@ -33,6 +35,48 @@ llvm::Value* NumAst::codeGen(CodeGenContext& context) {
 }
 
 llvm::Value* BinopAst::codeGen(CodeGenContext& context) {
+    llvm::Value* lhs = this->lhs->codeGen(context);
+    llvm::Value* rhs = this->rhs->codeGen(context);
+
+    if (!lhs || !rhs){
+        return nullptr;
+    }
+    switch (this->op){
+        case TOKEN_PLUS: //+
+            return context.builder.CreateAdd(lhs, rhs, "addtmp");
+        case TOKEN_MINUS: //-
+            return context.builder.CreateSub(lhs, rhs, "subtmp");
+        case TOKEN_MUL: //*
+            return context.builder.CreateMul(lhs, rhs, "multmp");
+        case TOKEN_DIV: // /
+            return context.builder.CreateSDiv(lhs, rhs, "divtmp");
+        case TOKEN_AND: // and
+            return context.builder.CreateAnd(lhs, rhs, "andtmp");
+        case TOKEN_OR: // or
+            return context.builder.CreateOr(lhs, rhs, "ortmp");
+        case TOKEN_XOR: //^
+            return context.builder.CreateXor(lhs, rhs, "xortmp");
+        case TOKEN_SHL: // <<
+            return context.builder.CreateShl(lhs, rhs, "shltmp");
+        case TOKEN_SHR: // >>
+            return context.builder.CreateAShr(lhs, rhs, "ashrtmp");
+
+        case TOKEN_NLT: // <
+            return context.builder.CreateICmpULT(lhs, rhs, "cmptmp");
+        case TOKEN_NLE:// <=
+            return context.builder.CreateICmpSLE(lhs, rhs, "cmptmp");
+        case TOKEN_NGE: // >=
+            return context.builder.CreateICmpSGE(lhs, rhs, "cmptmp");
+        case TOKEN_NGT: // >
+            return context.builder.CreateICmpSGT(lhs, rhs, "cmptmp");
+        case TOKEN_CEQ: // ==
+            return context.builder.CreateICmpEQ(lhs, rhs, "cmptmp");
+        case TOKEN_NEL: // !=
+            return context.builder.CreateICmpNE(lhs, rhs, "cmptmp");
+        default:
+            return LogError("Operator  is not found");
+    }
+
     return nullptr;
 }
 
@@ -124,11 +168,31 @@ llvm::Value* VarStmtAst::codeGen(CodeGenContext& context) {
 }
 
 llvm::Value* AssignExprAst::codeGen(CodeGenContext& context) {
-    return nullptr;
+    llvm::Value* dst = context.getvalue(this->name->name);
+    if( !dst ){
+        return LogError("Name " + this->name->name + " is not defined");
+    }
+    llvm::Value* exp = this->value->codeGen(context);
+    context.builder.CreateStore(exp, dst);
+    return dst;
 }
 
-llvm::Value* CallStmtAst::codeGen(CodeGenContext& context) {
-    return nullptr;
+llvm::Value* CallExprAst::codeGen(CodeGenContext& context) {
+    llvm::Function * function = context.theModule->getFunction(this->function->name);
+    if( !function ){
+        LogError("Function" + this->function->name + " name not found");
+    }
+    if( function->arg_size() != this->args->size() ){
+        LogError("Function arguments size not match" );
+    }
+    std::vector<llvm::Value*> args;
+    for(auto it : *this->args){
+        args.push_back((it)->codeGen(context));
+        if( !args.back() ){        // 如果有参数生成失败，那么返回nullptr
+            return nullptr;
+        }
+    }
+    return context.builder.CreateCall(function, args, "calltmp");
 }
 
 llvm::Value* ReturnStmtAst::codeGen(CodeGenContext& context) {
@@ -171,17 +235,19 @@ llvm::Value* FunctionStmtAst::codeGen(CodeGenContext& context) {
         } else{
             return LogError("Function block return value not founded");
         }
+
         context.popBlock();
 
     }
 
-
+    //context.setvalue(this->name->name, function);
     return function;
 }
 
 
 llvm::Value* LogError(const char* str){
-    std::cerr << "Error: " << str << "\n";
+    std::cerr << "Error: " << str << " line: " << yylineno <<"\n";
+    exit(1);
     return nullptr;
 }
 llvm::Value* LogError(std::string str){

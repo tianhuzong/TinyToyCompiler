@@ -13,11 +13,15 @@ set(BISON_INPUT parser.y)  # 你的Bison文件
 # 生成C++文件
 FLEX_TARGET(MyFlex ${FLEX_INPUT} ${CMAKE_CURRENT_BINARY_DIR}/lexer.cpp)
 BISON_TARGET(MyBison ${BISON_INPUT} ${CMAKE_CURRENT_BINARY_DIR}/parser.cpp)
-set(SOURCES ${FLEX_MyFlex_OUTPUTS} ${BISON_MyBison_OUTPUTS} codegen.cpp main.cpp )
+MESSAGE("FLEX_OUTPUT:" )
+MESSAGE(${FLEX_MyFlex_OUTPUTS})
+MESSAGE("BISON_OUTPUT")
+MESSAGE(${BISON_MyBison_OUTPUTS})
+set(SOURCES lexer.cpp parser.cpp  codegen.cpp main.cpp Node.h parser.hpp codegen.h)
 
 
 # 添加生成的文件到项目
-include_directories(${PROJECT_SOURCE_DIR})
+include_directories(${PROJECT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR} parser.hpp)
 add_executable(compiler  ${SOURCES})
 
 # LLVM
