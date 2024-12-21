@@ -45,6 +45,9 @@
 %type <tkid>  tkid
 %type <token> op
 
+%left TOKEN_PLUS TOKEN_MINUS
+%left TOKEN_MUL TOKEN_DIV TOKEN_MOD
+
 %start program
 
 %%
