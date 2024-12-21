@@ -5,9 +5,11 @@
     #include "Node.h"
     NBlock* root_program;
     extern int yylex();
+    extern int yylineno;
 	void yyerror(const char* s)
 	{
-		printf("Error: %s\n", s);
+		printf("Error: %s, line %d\n", s,yylineno);
+        exit(1);
 	}
 %}
 
@@ -98,7 +100,7 @@ assign : tkid TOKEN_EQUAL expr { $$ = new AssignExprAst(shared_ptr<NameAst>($1),
 
 tkid : TOKEN_ID { $$ = new NameAst(*$1); delete $1; }
 
-for_stmt : TOKEN_FOR LPAREN expr TOKEN_SEMICOLON expr TOKEN_SEMICOLON expr RBRACE block { $$ = new ForStmtAst(shared_ptr<ExprAst>($3), shared_ptr<ExprAst>($5), shared_ptr<ExprAst>($7), shared_ptr<NBlock>($9)); }
+for_stmt : TOKEN_FOR LPAREN expr TOKEN_SEMICOLON expr TOKEN_SEMICOLON expr RPAREN block { $$ = new ForStmtAst(shared_ptr<ExprAst>($3), shared_ptr<ExprAst>($5), shared_ptr<ExprAst>($7), shared_ptr<NBlock>($9)); }
 
 while_stmt : TOKEN_WHILE LPAREN expr RPAREN block  { $$ = new WhileStmtAst(shared_ptr<ExprAst>($3), shared_ptr<NBlock>($5)); }
 

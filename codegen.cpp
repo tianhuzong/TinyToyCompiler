@@ -96,7 +96,7 @@ llvm::Value* IfStmtAst::codeGen(CodeGenContext& context) {
     }
     cond = context.builder.CreateIntCast(cond, llvm::Type::getInt1Ty(context.llvmContext), true);
     cond = context.builder.CreateICmpNE(cond, llvm::ConstantInt::get(llvm::Type::getInt1Ty(context.llvmContext), 0, true));
-    llvm::Function* theFunction = context.builder.GetInsertBlock()->getParent();      // the function where if statement is in
+    llvm::Function* theFunction = context.builder.GetInsertBlock()->getParent();
 
     llvm::BasicBlock *thenBB = llvm::BasicBlock::Create(context.llvmContext, "then", theFunction);
     llvm::BasicBlock *falseBB = llvm::BasicBlock::Create(context.llvmContext, "else");
@@ -142,10 +142,80 @@ llvm::Value* IfStmtAst::codeGen(CodeGenContext& context) {
 }
 
 llvm::Value* ForStmtAst::codeGen(CodeGenContext& context) {
+    llvm::Function* theFunction = context.builder.GetInsertBlock()->getParent();
+
+    llvm::BasicBlock *block = llvm::BasicBlock::Create(context.llvmContext, "forloop", theFunction);
+    llvm::BasicBlock *after = llvm::BasicBlock::Create(context.llvmContext, "forcont");
+
+    // 第一个参数 初始化
+    if( this->init )
+        this->init->codeGen(context);
+    //第二个参数 条件
+    llvm::Value* condValue = this->condition->codeGen(context);
+    if( !condValue )
+        return nullptr;
+
+    condValue = context.builder.CreateIntCast(condValue, llvm::Type::getInt1Ty(context.llvmContext), true);
+    condValue = context.builder.CreateICmpNE(condValue, llvm::ConstantInt::get(llvm::Type::getInt1Ty(context.llvmContext), 0, true));
+
+    context.builder.CreateCondBr(condValue, block, after);
+    context.builder.SetInsertPoint(block);
+    context.pushBlock(block);
+    // 第4个参数 循环体
+    this->body->codeGen(context);
+
+    context.popBlock();
+
+    // 第三个参数 自增
+    if( this->increment ){
+        this->increment->codeGen(context);
+    }
+
+    // 判断循环条件
+    condValue = this->condition->codeGen(context);
+    condValue = context.builder.CreateIntCast(condValue, llvm::Type::getInt1Ty(context.llvmContext), true);
+    condValue = context.builder.CreateICmpNE(condValue, llvm::ConstantInt::get(llvm::Type::getInt1Ty(context.llvmContext), 0, true));
+    context.builder.CreateCondBr(condValue, block, after);
+
+    theFunction->getBasicBlockList().push_back(after);
+    context.builder.SetInsertPoint(after);
+
     return nullptr;
 }
 
 llvm::Value* WhileStmtAst::codeGen(CodeGenContext& context) {
+    llvm::Function* theFunction = context.builder.GetInsertBlock()->getParent();
+
+    llvm::BasicBlock *block = llvm::BasicBlock::Create(context.llvmContext, "whileloop", theFunction);
+    llvm::BasicBlock *after = llvm::BasicBlock::Create(context.llvmContext, "whilecont");
+
+    // 判断循环条件
+    llvm::Value* condValue = this->condition->codeGen(context);
+    if (!condValue) 
+        return nullptr;
+
+    condValue = context.builder.CreateIntCast(condValue, llvm::Type::getInt1Ty(context.llvmContext), true);
+    condValue = context.builder.CreateICmpNE(condValue, llvm::ConstantInt::get(llvm::Type::getInt1Ty(context.llvmContext), 0, true));
+
+    context.builder.CreateCondBr(condValue, block, after);
+    context.builder.SetInsertPoint(block);
+    context.pushBlock(block);
+
+    // 循环体
+    this->body->codeGen(context);
+
+    context.popBlock();
+
+    // 重新判断循环条件
+    condValue = this->condition->codeGen(context);
+    condValue = context.builder.CreateIntCast(condValue, llvm::Type::getInt1Ty(context.llvmContext), true);
+    condValue = context.builder.CreateICmpNE(condValue, llvm::ConstantInt::get(llvm::Type::getInt1Ty(context.llvmContext), 0, true));
+    context.builder.CreateCondBr(condValue, block, after);
+
+    // 插入循环后续的基本块
+    theFunction->getBasicBlockList().push_back(after);
+    context.builder.SetInsertPoint(after);
+
     return nullptr;
 }
 

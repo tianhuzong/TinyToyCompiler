@@ -1,0 +1,29 @@
+extern int print(int a)
+extern int power(int a)
+#上面是测试
+int main(){
+    int x = 10
+    if (1 == 1){
+        int a = power(2)
+        int b = a
+        int c = b
+    } else if (2 == 2){
+        int d = 1
+        int e = power(d * 2)
+    }
+    else {
+        int f = 1
+    }
+    int i
+    for (i = 0; i < 10; i = i + 1)
+    {
+        x = x + 1
+        print(x)
+    }
+    int g = 10
+    while (g > 0){
+        g = g - 1
+    }
+    print(x)
+    return 0
+}
